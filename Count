@@ -1,0 +1,87 @@
+#!/usr/bin/env perl
+use Mojolicious::Lite;
+use v5.14;
+use experimental 'signatures';
+
+plugin 'minion' => File => '/tmp/minion.db';
+
+app->minion->add_task(count => sub ($job,$upto) {
+        unless ($upto =~/^[0-9]+$/) {
+            return $job->finish({status => 'error', msg => "bad number : $upto"});
+        }
+        app->log->info("sleeping $upto");
+        sleep $upto;
+        app->log->info("done sleeping $upto");
+        my $sum = 0;
+        $sum += $_ for (1..$upto);
+        return $job->finish({status => 'ok', result => $sum});
+    });
+
+get '/' => sub ($c) {
+  my $jobs = $c->minion->backend->list_jobs(0,100,{state => 'finished'});
+  $c->stash(jobs => $jobs);
+  $c->render('index');
+} => 'index';
+
+get '/delete' => sub($c) {
+    my $id = $c->param('id');
+    $c->flash(msg => "deleted job");
+    $c->minion->backend->remove_job($id);
+    $c->redirect_to('index');
+} => 'delete';
+
+post '/count' => sub($c) {
+    my $num = $c->param('upto');
+    $c->flash(msg => "count up to $num");
+    my $id = $c->minion->enqueue(count => [ $num ] );
+    $c->redirect_to('index');
+};
+
+app->start;
+__DATA__
+
+@@ layouts/default.html.ep
+<!DOCTYPE html>
+<html>
+  <head><title><%= title %></title></head>
+  <style>
+  table {
+    border:1px solid;
+    border-collapse:collapse;
+  }
+  table tr td {
+    padding:5px;
+    border:1px solid black;  
+  }
+
+  </style>
+  <body><%= content %></body>
+</html>
+
+@@ index.html.ep
+% layout 'default';
+% title 'Count';
+<b><%= flash 'msg'; %></b>
+%= form_for 'count' => begin
+%= text_field 'upto', placeholder => 'up to?';
+%= submit_button 'queue';
+%= end
+<pre>
+%= dumper(minion->stats);
+</pre>
+<table>
+<caption>Finished jobs</caption>
+<tr>
+<th>args</th>
+<th>result</th>
+<th>time</th>
+</tr>
+% for my $j (@$jobs) {
+<tr>
+<td><%= join ',', @{ $j->{args} }; %></td>
+<td><%= dumper($j->{result}) %></td>
+<td><%= $j->{finished} - $j->{created} %></td>
+<td><%= link_to url_for('delete')->query(id => $j->{id}) => begin %>delete<%= end %></td>
+</tr>
+% }
+</table>
