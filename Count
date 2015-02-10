@@ -49,7 +49,7 @@ __DATA__
     border:1px solid;
     border-collapse:collapse;
   }
-  table tr td {
+  table tr td,th,caption {
     padding:5px;
     border:1px solid black;  
   }
@@ -69,6 +69,7 @@ __DATA__
 <pre>
 %= dumper(minion->stats);
 </pre>
+<p>Number of workers running : <%= minion->stats->{active_workers} + minion->stats->{inactive_workers} %></p>
 <table>
 <caption>Finished jobs</caption>
 <tr>
