@@ -64,49 +64,55 @@ __DATA__
 % layout 'default';
 % title 'Count';
 %= form_for 'count' => begin
-%= text_field 'upto', placeholder => 'count up to what?';
-%= submit_button 'enqueue';
+    %= text_field 'upto', placeholder => 'count up to what?';
+    %= submit_button 'enqueue';
 %= end
 <p>task : <b><%= flash 'msg'; %></b></p>
 <%= link_to $self->req->url => begin %>refresh<%= end %><br>
 % my $s = minion->stats;
 % unless ($s->{active_workers} || $s->{inactive_workers}) {
-<b>No workers are running.</b>
+    <b>No workers are running.</b>
 % }
 <table>
-<tr><th></th><th>active</th><th>inactive</th><th>finished</th><th>failed</th>
-<th>total</th></tr>
-<tr><td>workers</td>
-    <td><%= $s->{active_workers} %></td>
-    <td><%= $s->{inactive_workers} %></td>
-    <td></td>
-    <td></td>
-    <td><%= $s->{active_workers} + $s->{inactive_workers} %></td>
-</tr>
-% my $t = 0;
-<tr><td>jobs</td>
-    <td><%= $s->{active_jobs} %></td>
-    <td><%= $s->{inactive_jobs} %></td>
-    <td><%= $s->{finished_jobs} %></td>
-    <td><%= $s->{failed_jobs} %></td>
-    <td><%= $s->{active_jobs} + $s->{inactive_jobs} + $s->{finished_jobs} + $s->{failed_jobs} %></td>
-</tr>
+    <tr>
+        <th></th>
+        <th>active</th>
+        <th>inactive</th>
+        <th>finished</th>
+        <th>failed</th>
+        <th>total</th>
+    </tr>
+    <tr><td>workers</td>
+        <td><%= $s->{active_workers} %></td>
+        <td><%= $s->{inactive_workers} %></td>
+        <td></td>
+        <td></td>
+        <td><%= $s->{active_workers} + $s->{inactive_workers} %></td>
+    </tr>
+    % my $t = 0;
+    <tr><td>jobs</td>
+        <td><%= $s->{active_jobs} %></td>
+        <td><%= $s->{inactive_jobs} %></td>
+        <td><%= $s->{finished_jobs} %></td>
+        <td><%= $s->{failed_jobs} %></td>
+        <td><%= $s->{active_jobs} + $s->{inactive_jobs} + $s->{finished_jobs} + $s->{failed_jobs} %></td>
+    </tr>
 </table>
 <br>
 <table>
-<caption>Finished jobs</caption>
-<tr>
-<th>args</th>
-<th>result</th>
-<th>run time</th>
-</tr>
-% for my $j (@$jobs) {
-<tr>
-<td><%= join ',', @{ $j->{args} }; %></td>
-<td><%= dumper($j->{result}) %></td>
-<td><%= $j->{finished} - $j->{started} %></td>
-<td><%= link_to url_for('delete')->query(id => $j->{id}) => begin %>delete<%= end %></td>
-</tr>
-% }
+    <caption>Finished jobs</caption>
+    <tr>
+        <th>args</th>
+        <th>result</th>
+        <th>run time</th>
+    </tr>
+    % for my $j (@$jobs) {
+    <tr>
+        <td><%= join ',', @{ $j->{args} }; %></td>
+        <td><%= dumper($j->{result}) %></td>
+        <td><%= $j->{finished} - $j->{started} %></td>
+        <td><%= link_to url_for('delete')->query(id => $j->{id}) => begin %>delete<%= end %></td>
+    </tr>
+    % }
 </table>
 
