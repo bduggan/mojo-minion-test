@@ -105,6 +105,7 @@ __DATA__
         <th>args</th>
         <th>result</th>
         <th>run time</th>
+        <th>delete</th>
     </tr>
     % for my $j (@$jobs) {
     <tr>
