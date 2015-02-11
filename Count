@@ -3,7 +3,9 @@ use Mojolicious::Lite;
 use v5.14;
 use experimental 'signatures';
 
-plugin 'minion' => File => '/tmp/minion.db';
+#plugin 'minion' => File => '/tmp/minion.db';
+plugin 'minion' => Pg => 'postgresql:///gcis_jobs';
+app->minion->backend->pg->migrations->migrate;
 
 app->minion->add_task(count => sub ($job,$upto) {
         unless ($upto =~/^[0-9]+$/) {
@@ -61,15 +63,35 @@ __DATA__
 @@ index.html.ep
 % layout 'default';
 % title 'Count';
-<b><%= flash 'msg'; %></b>
 %= form_for 'count' => begin
 %= text_field 'upto', placeholder => 'up to?';
 %= submit_button 'queue';
 %= end
-<pre>
-%= dumper(minion->stats);
-</pre>
-<p>Number of workers running : <%= minion->stats->{active_workers} + minion->stats->{inactive_workers} %></p>
+<p>task : <b><%= flash 'msg'; %></b></p>
+<%= link_to $self->req->url => begin %>refresh<%= end %><br>
+% my $s = minion->stats;
+% unless ($s->{active_workers} || $s->{inactive_workers}) {
+<b>No workers are running.</b>
+% }
+<table>
+<tr><th></th><th>active</th><th>inactive</th><th>finished</th><th>failed</th>
+<th>total</th></tr>
+<tr><td>workers</td>
+    <td><%= $s->{active_workers} %></td>
+    <td><%= $s->{inactive_workers} %></td>
+    <td></td>
+    <td></td>
+    <td><%= $s->{active_workers} + $s->{inactive_workers} %></td>
+</tr>
+% my $t = 0;
+<tr><td>jobs</td>
+    <td><%= $s->{active_jobs} %></td>
+    <td><%= $s->{inactive_jobs} %></td>
+    <td><%= $s->{finished_jobs} %></td>
+    <td><%= $s->{failed_jobs} %></td>
+    <td><%= $s->{active_jobs} + $s->{inactive_jobs} + $s->{finished_jobs} + $s->{failed_jobs} %></td>
+</tr>
+</table>
 <table>
 <caption>Finished jobs</caption>
 <tr>
@@ -86,3 +108,4 @@ __DATA__
 </tr>
 % }
 </table>
+
