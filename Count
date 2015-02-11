@@ -55,6 +55,9 @@ __DATA__
     padding:5px;
     border:1px solid black;  
   }
+  .alert {
+    color:red;
+  }
 
   </style>
   <body><%= content %></body>
@@ -71,7 +74,7 @@ __DATA__
 <%= link_to $self->req->url => begin %>refresh<%= end %><br>
 % my $s = minion->stats;
 % unless ($s->{active_workers} || $s->{inactive_workers}) {
-    <b>No workers are running.</b>
+    <b class='alert'>No workers are running.</b>
 % }
 <table>
     <tr>
