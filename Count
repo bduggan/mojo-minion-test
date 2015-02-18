@@ -2,10 +2,27 @@
 use Mojolicious::Lite;
 use v5.14;
 use experimental 'signatures';
+use lib './lib';
+use Minion::Backend::Pg::Mine;
+
+app->config({
+            hypnotoad => { listen => [ 'http://localhost:3001' ] }
+     });
+app->log->path('/tmp/count.log');
 
 #plugin 'minion' => File => '/tmp/minion.db';
-plugin 'minion' => Pg => 'postgresql:///jobs';
+plugin 'minion' => 'Pg' => 'postgresql:///fresh';
+app->minion->backend->pg->unsubscribe('connection');
+app->minion->backend->pg->db->query(q[set client_min_messages to WARNING]) or die 'db error';
+app->minion->backend->pg->db->query(q[create schema if not exists minion]) or die 'db error';
+
+app->minion->backend->pg->db->query(q[set search_path='minion']) or die 'db error';
 app->minion->backend->pg->migrations->migrate;
+
+app->minion->backend->pg->on(connection => sub {
+        my ($pg,$dbh) = @_;
+        $dbh->do(q[set search_path='minion']);
+    });
 
 app->minion->add_task(count => sub ($job,$upto) {
         unless ($upto =~/^[0-9]+$/) {
@@ -17,6 +34,9 @@ app->minion->add_task(count => sub ($job,$upto) {
         my $sum = 0;
         $sum += $_ for (1..$upto);
         return $job->finish({status => 'ok', result => $sum});
+    });
+
+app->minion->add_task(master => sub($job,$upto) {
     });
 
 get '/' => sub ($c) {
