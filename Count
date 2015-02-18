@@ -3,7 +3,6 @@ use Mojolicious::Lite;
 use v5.14;
 use experimental 'signatures';
 use lib './lib';
-use Minion::Backend::Pg::Mine;
 
 app->config({
             hypnotoad => { listen => [ 'http://localhost:3001' ] }
